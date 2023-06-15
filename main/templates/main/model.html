@@ -1,0 +1,73 @@
+{% extends 'main/base1.html' %}
+{% load static %}
+
+{% block title %}
+Страница переобучения
+{% endblock %}
+{% block content %}
+    <header class="d-flex flex-wrap justify-content-center py-3 mb-4 border-bottom">
+      <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto link-body-emphasis text-decoration-none">
+        <img class="bi me-2" width="240" height="50" src="{% static '/main/images/miit.jpg' %}"</img>
+      </a>
+
+      <ul class="nav nav-pills">
+        <li class="nav-item"><a href="/" class="nav-link" aria-current="page">Главная</a></li>
+        <li class="nav-item"><a href="/learning" class="nav-link">Модель</a></li>
+          <li class="nav-item"><a href="/model" class="nav-link active">Результаты</a></li>
+        <li class="nav-item"><a href="/about" class="nav-link">О проекте</a></li>
+      </ul>
+    </header>
+<h3 align="center">Точность была:{{result1}}</h3>
+<h3 align="center">Точность стала:{{result2}}</h3>
+<h3 align="center">{{result3}}</h3>
+
+
+<div>
+  <canvas id="myChart"></canvas>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+  var df = {{ df|safe }};
+  var df1 = {{df1|safe}};
+  const ctx = document.getElementById('myChart');
+
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels:df1,
+      datasets: [{
+        label: 'Точность модели',
+        data: df,
+          backgroundColor: [
+          'rgba(255, 26, 104, 0.2)',
+          'rgba(54, 162, 235, 0.2)',
+          'rgba(255, 206, 86, 0.2)',
+          'rgba(75, 192, 192, 0.2)',
+          'rgba(153, 102, 255, 0.2)',
+          'rgba(255, 159, 64, 0.2)',
+          'rgba(0, 0, 0, 0.2)'
+        ],
+        borderColor: [
+          'rgba(255, 26, 104, 1)',
+          'rgba(54, 162, 235, 1)',
+          'rgba(255, 206, 86, 1)',
+          'rgba(75, 192, 192, 1)',
+          'rgba(153, 102, 255, 1)',
+          'rgba(255, 159, 64, 1)',
+          'rgba(0, 0, 0, 1)'
+        ],
+        borderWidth: 1
+      }]
+    },
+    options: {
+      scales: {
+        y: {
+          beginAtZero: true
+        }
+      }
+    }
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,55 @@
+{% extends 'admin/change_list.html' %}
+{% block object-tools %}
+<style>
+
+
+  form {
+    display: inline-block;
+}
+
+input[type=file]::file-selector-button {
+  margin-right: 20px;
+  border: none;
+  background: #084cdf;
+  padding: 10px 20px;
+  border-radius: 10px;
+  color: #fff;
+  cursor: pointer;
+  transition: background .2s ease-in-out;
+}
+
+input[type=file]::file-selector-button:hover {
+  background: #0d45a5;
+}
+.box {
+    margin-right: 50px;
+    display:inline-block;
+}
+</style>
+<br>
+<div class="box">
+    <form id="1" action="{% url 'admin:insert1' %}" method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+        <h1>Обновить датасет</h1>
+   <p>{{ form.non_field_errors }}</p>
+   <p>{{ submit_csv_form.as_p }}</p>
+   <p>{{ submit_csv_form.csv_file.errors }}</p>
+   <p><input type="submit" value="Загрузить" />
+   <input type="reset" value="Очистить"></p>
+    </form>
+    </div>
+<div class="box">
+
+    <form id="2" action="{% url 'admin:insert2' %}" method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+        <h1 >Дополнить датасет</h1>
+   <p>{{ form.non_field_errors }}</p>
+   <p>{{ submit_csv_form.as_p }}</p>
+   <p>{{ submit_csv_form.csv_file.errors }}</p>
+   <p><input type="submit" value="Загрузить"/>
+   <input type="reset" value="Очистить"></p>
+    </form>
+    </div>
+    {{ block.super }}
+
+{% endblock %}

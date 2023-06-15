@@ -1,0 +1,65 @@
+{% extends 'main/base.html' %}
+{% load static %}
+{% block title %}
+Страница нейросети
+{% endblock %}
+
+
+{% block content %}
+    <header class="d-flex flex-wrap justify-content-center py-3 mb-4 border-bottom">
+      <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto link-body-emphasis text-decoration-none">
+        <img class="bi me-2" width="240" height="50" alt = "" src="{% static '/main/images/miit.jpg' %}">
+      </a>
+
+      <ul class="nav nav-pills">
+        <li class="nav-item"><a href="/" class="nav-link" aria-current="page">Главная</a></li>
+        <li class="nav-item"><a href="/learning" class="nav-link active">Модель</a></li>
+          <li class="nav-item"><a href="/model" class="nav-link">Результаты</a></li>
+        <li class="nav-item"><a href="/about" class="nav-link">О проекте</a></li>
+      </ul>
+    </header>
+    <link rel="stylesheet" href="{% static '/main/css/123.css' %}">
+    <style>
+        body {
+            text-align: center;
+        }
+    </style>
+<h1>Страница переобучения нейросети</h1>
+<h4 align = 'center'>Нажмите, чтобы начать процесс переобучения модели на основе последних данных.</h4>
+<!--    <div style="padding: 20px;" class="pic">-->
+<!--        <img src="{% static '/main/images/1603630.png' %}">-->
+<!--    </div>-->
+<br>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" name="run_script" value="fre" class="button-27">Обучить сеть прямого распространения</button>
+    </form>
+<br>
+<br>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" name="run_script1" value="fre" class="button-27">Обучить LSTM-сеть</button>
+    </form>
+<br>
+<br>
+<br>
+
+<h1>Посмотреть последние результаты:</h1>
+<br>
+<form method="post">
+    {% csrf_token %}
+<button type = "submit" name="_getresult"  value="rfvt" class="button-27">Результаты</button>
+    <br>
+{% if learn %}
+    <h2>Подождите, пока модель не закончит обучение</h2>
+    </form>
+       <div class="container" id = "con" >
+            <div class="circular-progress">
+                <span class="progress-value">0%</span>
+            </div>
+        </div>
+<script src="{% static '/main/js/123.js' %}"></script>
+
+
+{% endif %}
+{% endblock %}
