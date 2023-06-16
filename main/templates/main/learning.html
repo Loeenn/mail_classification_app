@@ -1,4 +1,4 @@
-{% extends 'main/base.html' %}
+{% extends 'main/base1.html' %}
 {% load static %}
 {% block title %}
 Страница нейросети
@@ -8,7 +8,7 @@
 {% block content %}
     <header class="d-flex flex-wrap justify-content-center py-3 mb-4 border-bottom">
       <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto link-body-emphasis text-decoration-none">
-        <img class="bi me-2" width="240" height="50" alt = "" src="{% static '/main/images/miit.jpg' %}">
+        <img class="bi me-2" width="240" height="50" src="{% static '/main/images/miit.jpg' %}">
       </a>
 
       <ul class="nav nav-pills">
@@ -27,7 +27,6 @@
 <h1>Страница переобучения нейросети</h1>
 <h4 align = 'center'>Нажмите, чтобы начать процесс переобучения модели на основе последних данных.</h4>
 <!--    <div style="padding: 20px;" class="pic">-->
-<!--        <img src="{% static '/main/images/1603630.png' %}">-->
 <!--    </div>-->
 <br>
     <form method="post">
