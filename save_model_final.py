@@ -197,17 +197,32 @@ def relearn_model():
 
     df_text.columns = ['text', 'category']
 
+    # Приводм данные к сbbтрочному виду
+    df_text['text'] = [x.lower() for x in df_text['text']]
+
+    for i in range(df_text['text'].shape[0]):
+        df_text['text'][i] = ' '.join(re.sub("(@[A-Za-z0-9]+)", " ", df_text['text'][i]).split())
+        df_text['text'][i] = ' '.join(re.sub("\[[^()]*\]", " ", df_text['text'][i]).split())
+        df_text['text'][i] = ' '.join(re.sub("[A-Za-z0-9]", " ", df_text['text'][i]).split())
+    df_text['text'] = [x.lower() for x in df_text['text']]
+    # Удаляем рабочие символы и знаки припенания
+    df_text['text'] = [re.sub(r'\W+', ' ', x) for x in df_text['text']]
+    # Посмотрим сколько различных слов в нашем массиве
+    results = set()
+    df_text['text'].str.lower().str.split().apply(results.update)
+    print('Количество слов в массиве с обращениями', len(results))
+
+    df_text.columns = ['text', 'category']
+
     texts = df_text['text'].values  # Извлекаем данные всех текстов из столбца text
 
     classes = list(df_text['category'].values)  # Извлекаем соответствующие им значения классов (лейблов) столбца text
 
-    maxWordsCount = 40000  # Зададим максимальное количество слов/индексов, учитываемое при обучении текстов
+    maxWordsCount = 60000  # Зададим максимальное количество слов/индексов, учитываемое при обучении текстов
+
+    print(df_text['category'].unique())  # Выводим все уникальные значения классов
 
     nClasses = df_text['category'].nunique() + 1  # Задаём количество классов, обращаясь к столбцу category и оставляя
-    print(nClasses)
-    # Преобразовываем текстовые данные в числовые/векторные для обучения нейросетью
-    # Для этого воспользуемся встроенной в Keras функцией Tokenizer для разбиения текста и
-    # превращения в матрицу числовых значений
 
     tokenizer = Tokenizer(num_words=maxWordsCount, filters='!"#$%&()*+,-./:;<=>?@[\\]^_`{|}~\t\n',
                           lower=True, split=' ', oov_token='unknown', char_level=False)
@@ -215,26 +230,19 @@ def relearn_model():
     tokenizer.fit_on_texts(
         texts)  # "Скармливаем" наши тексты, т.е. даём в обработку методу, который соберет словарь частотности
 
-    # Формируем матрицу индексов по принципу Bag of Words
-    xAll = tokenizer.texts_to_matrix(texts)  # Каждое слово из текста нашло свой индекс в векторе длиной maxWordsCount
-    # Получим список слов, входящих в наш токенизатор (при наличии установленного maxWordsCount)
-    list_columns = ['статус_отступа']
-    for key_word in list(tokenizer.word_index.keys())[:maxWordsCount - 1]:
-        list_columns.append(key_word)
-
-    # перейдем от индексов обратно к словами
-
     # Преобразовываем категории в векторы
     encoder = LabelEncoder()  # Вызываем метод кодирования тестовых лейблов из библиотеки sklearn
-    encoder.fit(list(df_text['category'].unique()))  # Подгружаем в него категории из нашей базы
-    print(list(df_text['category'].unique()))
-    np.save('main/encoder.npy', encoder.classes_)
+    encoder.fit(classes)  # Подгружаем в него категории из нашей базы
     classesEncoded = encoder.transform(classes)  # Кодируем категории
+    print(encoder.classes_)
+    # Формируем матрицу индексов по принципу Bag of Words
+    xAll = tokenizer.texts_to_matrix(texts)  # Каждое слово из текста нашло свой индекс в векторе длиной maxWordsCount
+
     yAll = utils.to_categorical(classesEncoded, nClasses)  # И выводим каждый лейбл в виде вектора длиной 22,
+    # Получим список слов, входящих в наш токенизатор (при наличии установленного maxWordsCount)
     # с 1кой в позиции соответствующего класса и нулями
     # разбиваем все данные на обучающую и тестовую выборки с помощью метода train_test_split из библиотеки sklearn
     xTrain, xVal, yTrain, yVal = train_test_split(xAll, yAll, test_size=0.2, shuffle=True)
-
     # Создаём полносвязную сеть
     model01 = Sequential()
     # Входной полносвязный слой
@@ -263,11 +271,6 @@ def relearn_model():
                           epochs=20,
                           batch_size=128,
                           validation_data=(xVal, yVal))
-
-    currPred = model01.predict(xTrain[[0]])
-    # Определяем номер распознанного класса для каждохо блока слов длины xLen
-    currOut = np.argmax(currPred, axis=1)
-    predicted_text = encoder.inverse_transform(currOut)
     model01.save('main/my_model1.h5')
 
     with open('main/tokenizer1.pickle', 'wb') as handle:
@@ -288,7 +291,7 @@ def relearn_model():
 def predict_theme_letter(text, model1, tokenizer1, encoder1):
     with open(tokenizer1, 'rb') as f:
         tokenizer = pickle.load(f)
-    text = tokenizer.texts_to_matrix(text)
+    text = tokenizer.texts_to_matrix([text])
     model = keras.models.load_model(model1)
     currPred = model.predict(text)
     # Определяем номер распознанного класса для каждого блока слов длины xLen
@@ -330,17 +333,21 @@ def predict_theme_letter2(text, model1, tokenizer1, MAX_SEQUENCE_LENGTH =250):
     seq = tokenizer.texts_to_sequences(new_complaint)
     padded = pad_sequences(seq, maxlen=MAX_SEQUENCE_LENGTH)
     pred = model.predict(padded)
-    labels = ['Касательно простоя вагонов', 'Касательно изменения условий перевозки',
-              'Касательно перевозки личных вещей', 'Прочее', 'О ходе выплонения плана погрузки',
-              'согласование заявок ГУ', 'Об обеспечении доступа к системе ЭТРАН.',
-              'Об оформлении вагонов в АС ЭТРАН', 'Касательно согласования плана на перевозку',
-              'Касательно выдачи технических условий', 'Перевозка на особых условиях',
-              'о применении Тарифного руководства', 'Касательно организации перевозки',
-              'Об ограничениях отгрузки пиломатериалов', 'Касательно выдачи исходных данных',
-              'О предоставлении лимитов погрузки', 'О заключении договора', 'О предоставления скидки',
-              'Касательно отцепки вагонов', 'Выполнение поручений правительства РФ',
+    labels = ['Выполнение поручений правительства РФ',
+              'Касательно выдачи исходных данных',
+              'Касательно выдачи технических условий',
+              'Касательно изменения условий перевозки',
+              'Касательно организации перевозки', 'Касательно отцепки вагонов',
+              'Касательно перевозки личных вещей', 'Касательно простоя вагонов',
+              'Касательно согласования плана на перевозку', 'О заключении договора',
               'О предоставлении информации об осуществлении грузоперевозок',
-              'По вопросу согласования проекта Соглашения']
+              'О предоставлении лимитов погрузки', 'О предоставления скидки',
+              'О ходе выплонения плана погрузки',
+              'Об обеспечении доступа к системе ЭТРАН.',
+              'Об ограничениях отгрузки пиломатериалов',
+              'Об оформлении вагонов в АС ЭТРАН', 'Перевозка на особых условиях',
+              'По вопросу согласования проекта Соглашения', 'Прочее',
+              'о применении Тарифного руководства', 'согласование заявок ГУ']
     return labels[np.argmax(pred)]
 def relearn_model2():
     conn = sqlite3.connect('db.sqlite3')
@@ -372,13 +379,13 @@ def relearn_model2():
     df_text['text'] = [re.sub(r'\W+', ' ', x) for x in df_text['text']]
     # Посмотрим сколько различных слов в нашем массиве
     results = set()
+
     df_text['text'].str.lower().str.split().apply(results.update)
-    print('Количество слов в массиве с обращениями', len(results))
 
     df_text.columns = ['text', 'category']
 
     texts = df_text['text'].values  # Извлекаем данные всех текстов из столбца text
-
+    print(df_text.shape)
     classes = list(df_text['category'].values)
     MAX_NB_WORDS = 50000  # максимальный словарь
     MAX_SEQUENCE_LENGTH = 250  # максимальная длина предложения
@@ -391,8 +398,6 @@ def relearn_model2():
     Y = pd.get_dummies(df_text['category']).values
     X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.3, random_state=42)
 
-
-
     model = Sequential()
     model.add(Embedding(MAX_NB_WORDS, EMBEDDING_DIM, input_length=X.shape[1]))  # эмбендинг на наших текстах
     model.add(SpatialDropout1D(0.2))
@@ -400,10 +405,11 @@ def relearn_model2():
     model.add(Dense(22, activation='softmax'))
     model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
 
-    epochs = 5
-    batch_size = 128
+    epochs = 24
+    batch_size = 256
 
     history = model.fit(X_train, Y_train, epochs=epochs, batch_size=batch_size, validation_split=0.1)
+
     model.save('main/my_model2.h5')
 
 
